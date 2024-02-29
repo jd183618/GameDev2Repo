@@ -4,81 +4,44 @@ using UnityEngine.InputSystem.Interactions;
 using TMPro;
 
 
-public class Pistol : MonoBehaviour
+public class Pistol : Gun
 {
-    //Debug
-    public TMP_Text debug_text;
-    
-    //Gun Variables
-    public GunData gunData;
-    public Camera cam;
-    public Ray ray;
-
-    //Ammo
-    private int ammo_in_clip;
-
-    //Shooting
-    private bool primary_fire_is_shooting = false;
-    private bool primary_fire_hold = false;
-
-
-    // Start is called before the first frame update
-    void Start()
+    protected override void PrimaryFire()
     {
-        ammo_in_clip = gunData.ammo_per_clip;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-       debug_text.text = "Ammo In Clip: " + ammo_in_clip.ToString();
-    }
-
-    public void GetPrimaryFireInput(InputAction.CallbackContext context)
-    {
-        if (context.phase == InputActionPhase.Started)
+        //Check for delay
+        if (shoot_delay_timer <= 0)
         {
-            primary_fire_is_shooting = true;
-        }
-
-        if (gunData.automatic)
-        {
-            if(context.interaction is HoldInteraction && context.phase == InputActionPhase.Performed)
+            if (primary_fire_is_shooting || primary_fire_hold)
             {
-                primary_fire_hold = true;
+                primary_fire_is_shooting = false;
+                shoot_delay_timer = gunData.primary_fire_delay;
+
+                //Set direction of ray
+                Vector3 dir = Quaternion.AngleAxis(Random.Range(-gunData.spread, gunData.spread), Vector3.up) * cam.transform.forward;
+                dir = Quaternion.AngleAxis(Random.Range(-gunData.spread, gunData.spread), Vector3.right) * dir;
+
+                //Raycast
+                ray = new Ray(cam.transform.position, dir);
+                RaycastHit hit;
+                if (Physics.Raycast(ray, out hit, gunData.range))
+                {
+                    Debug.DrawLine(transform.position, hit.point, Color.blue, 0.05f);
+                }
+
+                //Subract Ammo
+                ammo_in_clip--;
+                if (ammo_in_clip <= 0) ammo_in_clip = gunData.ammo_per_clip;
+
             }
         }
 
-        if(context.phase == InputActionPhase.Canceled)
-        {
-            primary_fire_is_shooting = false;
-            primary_fire_hold = false;
-        }
-    }
-
-    public void GetSecondaryFireInput(InputAction.CallbackContext context)
-    {
-        if (context.phase == InputActionPhase.Started) SecondaryFire();
-    }
-
-    public void PrimaryFire()
-    {
-        //Raycast
-        ray = new Ray(cam.transform.position, cam.transform.forward);
-        RaycastHit hit;
-        if(Physics.Raycast(ray, out hit, gunData.range))
-        {
-            Debug.DrawRay(transform.position, hit.point, Color.blue, 0.05f);
-        }
-
-        //Subract Ammo
-        ammo_in_clip--;
-        if (ammo_in_clip <= 0) ammo_in_clip = gunData.ammo_per_clip;
 
     }
-    
-    public void SecondaryFire()
+
+    private void SecondaryFire()
     {
 
     }
+
+
 }

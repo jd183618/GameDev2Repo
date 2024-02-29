@@ -31,7 +31,7 @@ public class PlayerAirState : PlayerBaseState
         stateMachine.player_velocity = MoveAir(stateMachine.wish_dir, stateMachine.player_velocity);
 
         //Switch States
-        if (!stateMachine.character_controller.isGrounded)
+        if (stateMachine.character_controller.isGrounded)
         {
             stateMachine.SwitchState(this, stateMachine.ground_state);
         }
